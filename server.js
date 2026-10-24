@@ -23,19 +23,23 @@ app.disable('x-powered-by');
 app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'"],imgSrc:["'self'",'blob:','data:'],connectSrc:["'self'"],objectSrc:["'none'"],frameAncestors:["'none'"]}}}));
 app.use(express.static(path.join(root,'public')));
 app.use('/api', rateLimit({windowMs:15*60*1000,limit:15,standardHeaders:'draft-7',legacyHeaders:false}));
-const upload = multer({storage:multer.memoryStorage(),limits:{fileSize:8*1024*1024,files:3,fields:5,parts:8},fileFilter(_req,file,cb){if(!['image/jpeg','image/png','image/webp'].includes(file.mimetype))return cb(new Error('Sono ammesse solo immagini JPG, PNG o WebP.'));cb(null,true)}});
+const upload = multer({storage:multer.memoryStorage(),limits:{fileSize:8*1024*1024,files:3,fields:9,parts:12},fileFilter(_req,file,cb){if(!['image/jpeg','image/png','image/webp'].includes(file.mimetype))return cb(new Error('Sono ammesse solo immagini JPG, PNG o WebP.'));cb(null,true)}});
 function encrypted(buffer){const iv=crypto.randomBytes(12);const cipher=crypto.createCipheriv('aes-256-gcm',key,iv);const content=Buffer.concat([cipher.update(buffer),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),content]);}
 function decrypted(buffer){const iv=buffer.subarray(0,12);const tag=buffer.subarray(12,28);const decipher=crypto.createDecipheriv('aes-256-gcm',key,iv);decipher.setAuthTag(tag);return Buffer.concat([decipher.update(buffer.subarray(28)),decipher.final()]);}
 function safeName(s){return String(s||'').trim().replace(/\s+/g,' ').slice(0,90)}
 async function notify(id,name){if(!process.env.NOTIFY_EMAIL||!process.env.SMTP_HOST)return;const transporter=nodemailer.createTransport({host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT||587),secure:process.env.SMTP_SECURE==='true',auth:process.env.SMTP_USER?{user:process.env.SMTP_USER,pass:process.env.SMTP_PASSWORD}:undefined});await transporter.sendMail({from:process.env.SMTP_FROM||process.env.SMTP_USER,to:process.env.NOTIFY_EMAIL,subject:'Nuova acquisizione documenti',text:`Nuova acquisizione: ${name}\nCodice: ${id}\nAccedi al pannello riservato via HTTPS per visualizzarla.\nNessun documento è allegato.`});}
 app.post('/api/submit',upload.fields([{name:'front',maxCount:1},{name:'back',maxCount:1},{name:'selfie',maxCount:1}]),async(req,res)=>{
   const name=safeName(req.body.name),surname=safeName(req.body.surname);
+  const phone=safeName(req.body.phone),address=String(req.body.address||'').trim().slice(0,240);
+  const iban=String(req.body.iban||'').toUpperCase().replace(/\s/g,'');
+  const accountHolder=safeName(req.body.accountHolder).slice(0,120);
   if(!name||!surname||name.length<2||surname.length<2||!req.body.consent||req.body.consent!=='yes')return res.status(400).json({error:'Inserisci nome, cognome e consenso.'});
+  if(!/^[+0-9() .-]{6,25}$/.test(phone)||address.length<8||!accountHolder||accountHolder.length<3||!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban))return res.status(400).json({error:'Verifica telefono, indirizzo, IBAN e intestatario.'});
   if(!['front','back','selfie'].every(k=>req.files?.[k]?.length===1))return res.status(400).json({error:'Carica tutte e tre le immagini.'});
   const id=crypto.randomUUID();const dir=path.join(dataDir,id);
   try{
     await fs.mkdir(dir,{mode:0o700});
-    await fs.writeFile(path.join(dir,'details.enc'),encrypted(Buffer.from(JSON.stringify({id,name,surname,createdAt:new Date().toISOString(),consent:true}))),{mode:0o600});
+    await fs.writeFile(path.join(dir,'details.enc'),encrypted(Buffer.from(JSON.stringify({id,name,surname,phone,address,iban,accountHolder,createdAt:new Date().toISOString(),consent:true}))),{mode:0o600});
     for(const k of ['front','back','selfie']){
       const f=req.files[k][0];
       // Controlli di firma dei file: non affidarsi soltanto al tipo dichiarato dal browser.
