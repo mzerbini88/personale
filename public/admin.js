@@ -1,6 +1,12 @@
 const token=document.querySelector('#token'),list=document.querySelector('#list'),message=document.querySelector('#message');let urls=[];const headers=()=>({'x-admin-token':token.value});
 const wipe=()=>{urls.forEach(u=>URL.revokeObjectURL(u));urls=[];list.replaceChildren()};
-async function openImage(id,k,holder){const r=await fetch(`/api/admin/file/${id}/${k}`,{headers:headers(),cache:'no-store'});if(!r.ok)throw Error('Errore immagine');const url=URL.createObjectURL(await r.blob());urls.push(url);const img=document.createElement('img');img.src=url;img.alt=k;img.title='Tocca per ingrandire';img.addEventListener('click',()=>window.open(url,'_blank','noopener'));holder.append(img)}
+async function openImage(id,k,holder){const r=await fetch(`/api/admin/file/${id}/${k}`,{headers:headers(),cache:'no-store'});if(!r.ok)throw Error('Errore immagine');const url=URL.createObjectURL(await r.blob());urls.push(url);const img=document.createElement('img');img.src=url;
+img.alt=k;
+img.style.width='120px';
+img.style.height='90px';
+img.style.objectFit='cover';
+img.style.borderRadius='8px';
+img.style.cursor='pointer';img.title='Tocca per ingrandire';img.addEventListener('click',()=>window.open(url,'_blank','noopener'));holder.append(img)}
 document.querySelector('#load').addEventListener('click',async()=>{wipe();message.textContent='';try{const r=await fetch('/api/admin/list',{headers:headers(),cache:'no-store'});if(!r.ok)throw Error('Accesso negato');const rows=await r.json();message.textContent=`${rows.length} acquisizioni`;for(const row of rows){const card=document.createElement('div');card.className='card';const title=document.createElement('h3');title.textContent=`${row.name} ${row.surname}`;const date=document.createElement('p');date.textContent=new Date(row.createdAt).toLocaleString('it-IT')+' · '+row.id;const info=document.createElement('p');
 info.className='personal-info';
 info.textContent='Telefono: '+(row.phone||'—')+' | Residenza: '+(row.address||'—')+' | IBAN: '+(row.iban||'—')+' | Intestatario: '+(row.accountHolder||'—');
