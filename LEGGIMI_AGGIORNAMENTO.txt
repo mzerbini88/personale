@@ -1,0 +1,16 @@
+AGGIORNAMENTO VERSIONE 2
+
+Sostituisci nel repository GitHub (nella cartella usata da Render):
+server.js
+package.json
+private-admin.html
+public/index.html
+public/app.js
+public/admin.js
+public/style.css
+
+Commit changes: Render ripubblichera il servizio.
+NON caricare .env o chiavi su GitHub.
+
+IMPORTANTE: prova esclusivamente con immagini e IBAN fittizi.
+Il Render Free non conserva permanentemente i dati. Configurare storage sicuro e informativa privacy prima dell'uso reale.
