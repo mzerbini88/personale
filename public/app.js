@@ -34,7 +34,7 @@ backButton.addEventListener('click',()=>{step=Math.max(0,step-1);show()});
 next.addEventListener('click',async()=>{
   error.textContent='';
   if(step===0){
-    for(const k of ['name','surname','phone','address','iban','accountHolder'])if(!field(k).reportValidity())return;
+    for(const k of ['name','surname','email','phone','address','iban','accountHolder'])if(!field(k).reportValidity())return;
     const iban=field('iban').value.toUpperCase().replace(/\s/g,'');
     if(!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)){error.textContent='Controlla il formato IBAN.';return}
     field('iban').value=iban;
@@ -47,7 +47,7 @@ next.addEventListener('click',async()=>{
     next.disabled=true;next.textContent='Invio in corso…';
     try{
       const data=new FormData();
-      for(const k of ['name','surname','phone','address','iban','accountHolder'])data.append(k,field(k).value.trim());
+      for(const k of ['name','surname','email','phone','address','iban','accountHolder'])data.append(k,field(k).value.trim());
       for(const kind of kinds)data.append(kind,selected[kind].file,selected[kind].file.name);
       data.append('consent','yes');
       const r=await fetch('/api/submit',{method:'POST',body:data});
@@ -63,7 +63,7 @@ next.addEventListener('click',async()=>{
     const summary=document.querySelector('#summary');summary.replaceChildren();
     const section=(title)=>{const box=document.createElement('div');box.className='summary-card';const h=document.createElement('h3');h.textContent=title;box.append(h);summary.append(box);return box};
     const personal=section('👤 Dati personali');
-    for(const [label,k] of [['Nome','name'],['Cognome','surname'],['Telefono','phone'],['Residenza','address'],['IBAN','iban'],['Intestatario IBAN','accountHolder']]){
+    for(const [label,k] of [['Nome','name'],['Cognome','surname'],['Email','email'],['Telefono','phone'],['Residenza','address'],['IBAN','iban'],['Intestatario IBAN','accountHolder']]){
       const line=document.createElement('div');line.className='summary-row';
       const a=document.createElement('span');a.textContent=label;
       const b=document.createElement('strong');b.textContent=field(k).value;
