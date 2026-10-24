@@ -6,7 +6,7 @@ const backButton=document.querySelector('#back');
 const selected={front:null,back:null,selfie:null};
 let step=0;
 const field=k=>form.querySelector('[name="'+k+'"]');
-const kinds=['front','back','selfie'];
+const kinds=['front','back','selfieFrontDoc','selfieBackDoc','selfieNoDoc'];
 function show(){
   screens.forEach((s,i)=>s.classList.toggle('active',i===step));
   document.querySelector('#bar').style.width=Math.min(100,(step+1)*20)+'%';
